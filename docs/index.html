@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="QuestAI — Give it a goal. It investigates with specialized agents. You get a structured answer. Built for SerpApi India Hackathon 2026.">
+<meta property="og:title" content="QuestAI — Turn a question into a quest">
+<meta property="og:description" content="AI investigation workspace. LangGraph + Groq + SerpApi live data.">
+<title>QuestAI — Turn a question into a quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070913;--bg2:#0d1020;--s:#12162b;--s2:#181d33;--s3:#232946;--t:#f2f4fb;--m:#8c95b2;--m2:#67708c;--l:rgba(255,255,255,.08);--ls:rgba(255,255,255,.14);--ac:#7b84ff;--ac2:#a56bff;--cy:#4ee6d5;--gn:#56d9a0;--am:#f3c96a;--rd:#ff7a8a;--acs:rgba(123,132,255,.14);--gns:rgba(86,217,160,.11);--max:1200px;--r:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--t);font-family:Inter,system-ui,-apple-system,sans-serif;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.04em}
+button,input,select{font:inherit}a{color:inherit;text-decoration:none}.hidden{display:none!important}
+.bg-grid{position:fixed;inset:0;z-index:-3;background-image:linear-gradient(var(--l) 1px,transparent 1px),linear-gradient(90deg,var(--l) 1px,transparent 1px);background-size:72px 72px;mask-image:linear-gradient(to bottom,black 12%,transparent 74%);opacity:.18}
+.glow{position:fixed;left:50%;top:-360px;transform:translateX(-50%);width:900px;height:640px;background:radial-gradient(circle,rgba(123,132,255,.18),rgba(165,107,255,.08) 38%,transparent 70%);filter:blur(16px);z-index:-2;pointer-events:none;animation:breathe 9s ease-in-out infinite}
+.glow-b{position:fixed;left:50%;top:520px;transform:translateX(-50%);width:1100px;height:520px;background:radial-gradient(circle,rgba(78,230,213,.05),transparent 70%);filter:blur(20px);z-index:-2;pointer-events:none}
+.noise{position:fixed;inset:0;z-index:-1;opacity:.03;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E")}
+.container{width:min(var(--max),calc(100% - 40px));margin:auto}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:#b9c1ff;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ac);box-shadow:0 0 14px var(--ac)}
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(7,9,19,.82);backdrop-filter:blur(18px) saturate(1.2);border-bottom:1px solid transparent;transition:.2s}nav.scrolled{border-color:var(--l)}
+.nav-inner{height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-family:"Space Grotesk",sans-serif;font-weight:700;letter-spacing:-.03em;font-size:19px;display:flex;align-items:center;gap:9px}
+.brand-mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:grid;place-items:center;box-shadow:0 6px 20px rgba(123,132,255,.28)}
+.nav-links{display:flex;gap:26px;color:var(--m);font-size:14px;font-weight:500}.nav-links a:hover{color:var(--t)}
+.btn{border:0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:42px;padding:0 16px;font-weight:700;font-size:14px;cursor:pointer;transition:transform .18s,filter .18s,background .18s,border-color .18s}.btn:hover{transform:translateY(-1px)}.btn:active{transform:none}
+.btn-p{background:linear-gradient(120deg,var(--ac),var(--ac2));color:#fff;box-shadow:0 10px 28px rgba(123,132,255,.22)}.btn-p:hover{filter:brightness(1.06)}
+.btn-ghost{background:var(--s2);border:1px solid var(--l);color:var(--t)}.btn-ghost:hover{border-color:var(--ls)}
+.icon-btn{display:none;width:40px;height:40px;background:var(--s);border:1px solid var(--l);border-radius:10px}
+/* hero */
+.hero{padding:84px 0 52px;text-align:center}
+.hero h1{font-size:clamp(38px,7vw,82px);line-height:.97;margin:16px auto;max-width:860px;font-weight:700}
+.hero h1 i{background:linear-gradient(100deg,#fff 18%,#b9c1ff 55%,#c39cff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-style:normal;font-weight:700}
+.hero-copy{max-width:720px;margin:0 auto;color:var(--m);font-size:clamp(15px,2vw,18px);line-height:1.55}
+.tech-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:20px auto 0;max-width:860px}
+.pill{font-family:"JetBrains Mono",monospace;font-size:11px;padding:7px 10px;border-radius:99px;background:rgba(255,255,255,.055);border:1px solid var(--l);color:var(--m);white-space:nowrap}.pill b{color:var(--t);font-weight:700}
+.quest-shell{margin:38px auto 0;max-width:940px;text-align:left;position:relative}
+.quest-shell::before{content:"";position:absolute;inset:-1px;border-radius:22px;background:linear-gradient(135deg,rgba(123,132,255,.55),rgba(255,255,255,.06),rgba(165,107,255,.22));z-index:-1}
+.quest-card{border-radius:21px;background:rgba(16,19,34,.98);border:1px solid rgba(255,255,255,.06);box-shadow:0 28px 80px rgba(0,0,0,.45);overflow:hidden}
+.quest-top{padding:22px}
+.quest-label{display:flex;justify-content:space-between;gap:12px;color:var(--m);font-size:13px;font-weight:500;margin-bottom:12px;align-items:center}
+.mode{color:#c4caff;font-weight:700;display:flex;align-items:center;gap:7px;font-size:12px;white-space:nowrap}.mode-dot{width:7px;height:7px;background:var(--cy);border-radius:50%;box-shadow:0 0 10px var(--cy);animation:pulse 1.8s infinite;flex-shrink:0}
+.input-wrap{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.goal-input{width:100%;min-height:60px;background:var(--bg2);border:1px solid var(--l);border-radius:12px;color:var(--t);padding:16px 16px;font-size:15.5px;outline:0;transition:.2s}
+.goal-input:focus{border-color:rgba(123,132,255,.6);box-shadow:0 0 0 4px var(--acs)}.goal-input::placeholder{color:var(--m2)}
+.start-btn{height:60px;padding:0 22px;white-space:nowrap}
+.err{height:0;opacity:0;color:var(--rd);font-size:13px;transition:.2s;overflow:hidden}.err.show{height:22px;padding-top:6px;opacity:1}
+.domain-bar{padding:12px 16px;border-top:1px solid var(--l);display:flex;justify-content:space-between;align-items:center;gap:12px;background:rgba(255,255,255,.012)}
+.domains{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.domain{padding:8px 12px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--m);font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.2s;white-space:nowrap}
+.domain:hover{background:var(--s2);color:var(--t)}.domain.active{background:var(--acs);border-color:rgba(123,132,255,.4);color:var(--t);box-shadow:0 0 14px rgba(123,132,255,.12)}.domain svg{width:14px;height:14px;flex-shrink:0}
+.domain.coming{opacity:.5;cursor:default}.domain.coming:hover{background:transparent;color:var(--m)}
+.domains small{font-size:9px;letter-spacing:.08em;background:rgba(243,201,106,.15);color:var(--am);padding:2px 5px;border-radius:4px;font-weight:800}
+.examples{margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ex{font-size:12px;color:var(--m);background:rgba(255,255,255,.04);border:1px solid var(--l);border-radius:99px;padding:7px 12px;cursor:pointer;transition:.2s;white-space:nowrap}
+.ex:hover{color:var(--t);border-color:var(--ls);background:rgba(255,255,255,.06)}
+.mini-flow{margin:32px auto 0;display:flex;justify-content:center;align-items:center;gap:10px;color:var(--m2);font-size:11px;letter-spacing:.11em;text-transform:uppercase;flex-wrap:wrap}
+.mini-flow b{color:var(--m);font-weight:800}.line{width:42px;height:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent);opacity:.6}
+/* sections */
+section{padding:84px 0}
+.head{max-width:700px;margin-bottom:36px}.head.center{margin-left:auto;margin-right:auto;text-align:center}
+.head h2{font-size:clamp(30px,5vw,50px);line-height:1.06;margin:14px 0;font-weight:700}
+.head p{color:var(--m);margin:0;font-size:16px;line-height:1.6}
+.panel{background:linear-gradient(145deg,rgba(22,26,44,.96),rgba(14,17,31,.97));border:1px solid var(--l);border-radius:var(--r);box-shadow:0 20px 70px rgba(0,0,0,.22)}
+#demo-stage{scroll-margin-top:90px}
+.invest{padding:24px;min-height:420px}
+.inv-head{display:grid;grid-template-columns:1fr auto;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--l)}
+.inv-head h3{margin:4px 0;font-size:19px;letter-spacing:-.02em;font-family:"Space Grotesk",sans-serif}
+.inv-head p{margin:0;color:var(--m);font-size:13px;word-break:break-word}
+.live{padding:7px 11px;border-radius:99px;background:var(--acs);border:1px solid rgba(123,132,255,.25);color:#c9ceff;font-size:11px;font-weight:800;display:flex;align-items:center;gap:7px;height:fit-content}
+.pulse{width:7px;height:7px;background:var(--ac);border-radius:50%;animation:pulse 1.5s infinite}
+.inv-body{display:grid;grid-template-columns:1fr 280px;gap:28px;padding-top:22px}
+.steps{display:grid;gap:7px}
+.s{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;border:1px solid transparent;color:var(--m);transition:.4s;font-size:13px}
+.s.active{background:var(--acs);color:var(--t);border-color:rgba(123,132,255,.15)}.s.done{color:#b7dccc}
+.ic{width:24px;height:24px;border-radius:50%;border:1px solid var(--l);display:grid;place-items:center;font-size:11px;font-weight:800}
+.active .ic{border-color:var(--ac);background:rgba(123,132,255,.14);box-shadow:0 0 14px rgba(123,132,255,.2)}
+.done .ic{background:var(--gns);border-color:rgba(86,217,160,.28);color:var(--gn)}
+.meta{font-size:10px;color:var(--m2);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.path{border-left:1px solid var(--l);padding-left:24px}
+.path small{color:var(--m2);letter-spacing:.11em;text-transform:uppercase;font-weight:800;font-size:11px}
+.pn{margin-top:10px;padding:10px 12px;border:1px solid var(--l);border-radius:10px;color:var(--m);font-size:12px;background:rgba(255,255,255,.01);position:relative}
+.pn::before{content:"";position:absolute;left:-25px;top:50%;width:24px;height:1px;background:var(--l)}
+.pn.on{color:var(--t);background:var(--acs);border-color:rgba(123,132,255,.32)}.pn.on::after{content:"✓";float:right;color:var(--gn);font-weight:800}.pn.off{opacity:.45}
+.tech-note{margin-top:12px;padding:10px 11px;border-radius:10px;background:rgba(255,255,255,.03);border:1px dashed var(--l);color:var(--m2);font-size:11px;font-family:"JetBrains Mono",monospace;line-height:1.5}
+/* result */
+.result{animation:rise .5s ease both;margin-top:18px}
+.result-top{display:grid;grid-template-columns:1fr auto;gap:16px;margin-bottom:16px;align-items:center}
+.result-top h3{margin:3px 0;font-size:24px;letter-spacing:-.03em;font-weight:700;font-family:"Space Grotesk",sans-serif}
+.result-top p{margin:0;color:var(--m);font-size:13px}
+.badge{font-size:11px;font-weight:800;padding:7px 11px;border-radius:99px;background:var(--gns);border:1px solid rgba(86,217,160,.25);color:var(--gn)}
+.grid{display:grid;grid-template-columns:1.45fr .75fr;gap:14px}
+.card{padding:19px}.card h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin:0 0 12px;font-weight:800}
+.card p{margin:0;color:#c6cad5;font-size:14px;line-height:1.6}.summary{font-size:16px!important;line-height:1.7!important}
+.findings{display:grid;gap:9px}
+.finding{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:13px;background:rgba(255,255,255,.025);border:1px solid var(--l);border-radius:10px}
+.finding strong{font-size:13px}.finding p{font-size:12px;color:var(--m);margin-top:2px}
+.num{color:#b8c0ff;font-weight:800;font-size:11px}
+.source{padding:10px 0;border-top:1px solid var(--l);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.source:first-of-type{border-top:0}.source strong{font-size:13px}.source span{font-size:11px;color:var(--m)}.tag{color:#bbc3ff!important;font-weight:800;font-size:11px!important}
+.wide{grid-column:1/-1}
+.trip-ov{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.route{font-size:22px;font-weight:800;font-family:"Space Grotesk",sans-serif}.arr{color:var(--ac)}
+.metric{padding-left:14px;border-left:1px solid var(--l);color:var(--m);font-size:13px}
+.travel-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opt{background:rgba(255,255,255,.025);border:1px solid var(--l);border-radius:10px;padding:13px;margin-top:9px}
+.opt-row{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.opt-row strong{font-size:13px}.opt-row span{color:var(--m);font-size:12px}
+.price{font-size:17px!important;font-weight:800!important;color:var(--t)!important}
+.day{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--l)}
+.day:first-of-type{border-top:0}.day b{color:#bcc4ff;font-size:11px;font-weight:800}.day strong{font-size:13px}
+.costbar{height:10px;background:var(--s3);border-radius:99px;overflow:hidden;display:flex;margin:14px 0}
+.costbar span:nth-child(1){width:39%;background:var(--ac)}.costbar span:nth-child(2){width:43%;background:var(--ac2)}.costbar span:nth-child(3){width:18%;background:var(--cy)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--m);font-size:11px}
+.total{font-size:26px;font-weight:800;margin-top:12px;font-family:"Space Grotesk",sans-serif}.total small{font-size:12px;color:var(--gn)}
+.controls{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.ctrl{background:var(--s2);border:1px solid var(--l);color:var(--m);border-radius:8px;padding:8px 10px;font-size:12px;outline:0;cursor:pointer}
+.store{width:100%;border-collapse:collapse}.store th,.store td{padding:11px 10px;border-bottom:1px solid var(--l);text-align:left;font-size:13px}
+.store th{color:var(--m);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.store .best{background:var(--gns)}.bestlbl{font-size:9px;color:var(--gn);border:1px solid rgba(86,217,160,.3);padding:3px 6px;border-radius:99px;margin-left:6px;font-weight:800}
+.bars{display:grid;gap:13px}.bar-row{display:grid;grid-template-columns:70px 1fr 70px;align-items:center;gap:10px;font-size:12px}
+.track{height:8px;background:var(--s3);border-radius:10px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:10px;transform-origin:left;animation:grow .8s ease both}
+.bar-row:first-child .fill{background:var(--gn)}
+.job-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.job{padding:17px;border:1px solid var(--l);border-radius:11px;background:rgba(255,255,255,.02);transition:.2s}
+.job:hover{border-color:rgba(123,132,255,.18)}.job-head{display:flex;justify-content:space-between;gap:12px}
+.job h5{margin:0 0 2px;font-size:15px;font-family:"Space Grotesk",sans-serif}.comp{font-size:12px;color:#bdc4ff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.chip{font-size:10px;padding:5px 7px;border-radius:6px;background:var(--s3);color:var(--m);font-weight:600}
+.apply{border:0;background:transparent;color:#bdc4ff;font-weight:800;font-size:12px;cursor:pointer}.match{font-size:10px;color:var(--gn);font-weight:800;border:1px solid rgba(86,217,160,.2);padding:4px 7px;border-radius:99px;background:var(--gns);height:fit-content}
+.agents{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.ag{padding:22px;min-height:304px;position:relative;overflow:hidden;transition:.28s}
+.ag:hover{transform:translateY(-4px);border-color:rgba(123,132,255,.22);box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.ag-ic{width:42px;height:42px;border-radius:11px;background:var(--acs);color:#b8c0ff;display:grid;place-items:center;margin-bottom:26px;border:1px solid rgba(123,132,255,.14)}
+.ag-ic svg{width:19px;height:19px}.ag small{color:var(--m2);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
+.ag h3{margin:6px 0 8px;font-size:18px}.ag p{margin:0;color:var(--m);font-size:13px;line-height:1.55}
+.ag .tech{margin-top:14px;padding-top:12px;border-top:1px solid var(--l);font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--m2);line-height:1.6}
+.ag::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--ac),transparent);transform:scaleX(0);transition:.3s}.ag:hover::after{transform:scaleX(1)}
+.ag.coming{opacity:.62}.ag.coming .ag-ic{background:rgba(243,201,106,.1);color:var(--am);border-color:rgba(243,201,106,.18)}
+.router{padding:34px;display:grid;grid-template-columns:.72fr 1.28fr;gap:40px;align-items:center}
+.qchip{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:99px;background:var(--s2);border:1px solid var(--ls);font-family:"JetBrains Mono",monospace;font-size:11px;margin-top:12px}
+.map{display:grid;justify-items:center}.rn{padding:10px 18px;border-radius:10px;background:var(--s2);border:1px solid var(--l);font-weight:800;font-size:13px;min-width:160px;text-align:center}
+.rn.core{border-color:rgba(123,132,255,.5);background:var(--acs);box-shadow:0 0 22px rgba(123,132,255,.14)}
+.cv{height:28px;width:1px;background:linear-gradient(var(--ac),var(--l));position:relative;overflow:hidden}
+.cv::after{content:"";position:absolute;width:1px;height:11px;background:#fff;animation:route 1.6s linear infinite}
+.ras{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;width:100%;margin-top:2px}
+.ra{padding:11px 6px;border-radius:8px;border:1px solid var(--l);background:rgba(255,255,255,.01);text-align:center;font-size:11px;font-weight:700;color:var(--m2)}
+.ra.on{color:var(--t);background:var(--acs);border-color:rgba(123,132,255,.45)}.ra.on b{color:var(--gn)}
+.ev-wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:50px;align-items:center}
+.pipe{display:flex;align-items:center;gap:7px}.nd{width:84px;aspect-ratio:1;border-radius:14px;background:var(--s);border:1px solid var(--l);display:grid;place-items:center;text-align:center;font-size:11px;font-weight:700;flex-shrink:0}
+.nd svg{width:17px;height:17px;margin:0 auto 5px;color:#bbc3ff}
+.arrw{flex:1;height:1px;background:linear-gradient(90deg,var(--l),var(--ac));position:relative;min-width:8px}
+.arrw::after{content:"";position:absolute;right:0;top:-3px;border-left:5px solid var(--ac);border-top:3px solid transparent;border-bottom:3px solid transparent}
+.steps-tl{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--l);margin-top:6px}
+.st{padding:24px 20px;border-right:1px solid var(--l);position:relative}
+.st:last-child{border-right:0}.st::before{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:var(--bg);border:2px solid var(--ac);top:-6px;left:20px}
+.st b{color:#aeb7ff;font-size:11px;letter-spacing:.08em}.st h3{margin:16px 0 6px;font-size:17px}.st p{margin:0;color:var(--m);font-size:13px}
+.philosophy{padding:96px 0;text-align:center;border-top:1px solid var(--l);border-bottom:1px solid var(--l);background:radial-gradient(circle at 50% 45%,rgba(123,132,255,.08),transparent 44%)}
+.philosophy h2{font-size:clamp(38px,7vw,66px);margin:0 0 12px;font-weight:700}
+.philosophy p{max-width:650px;margin:auto;color:var(--m);font-size:18px}
+.strike{position:relative;color:var(--m)}.strike::after{content:"";position:absolute;left:-2px;right:-2px;top:54%;height:3px;background:var(--rd);transform:rotate(-2deg);border-radius:2px}
+/* hackathon — minimal why we built */
+.hack{padding:48px 0}
+.hack-card{position:relative;overflow:hidden;border-radius:22px;padding:1px;background:linear-gradient(135deg,rgba(123,132,255,.45),rgba(165,107,255,.28),rgba(78,230,213,.14))}
+.hack-inner{background:linear-gradient(145deg,#14182f,#0f1225);border-radius:21px;padding:28px;position:relative}
+.hack-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:99px;background:rgba(123,132,255,.14);border:1px solid rgba(123,132,255,.22);color:#b9c1ff;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.hack-badge i{width:8px;height:8px;border-radius:50%;background:var(--gn);box-shadow:0 0 10px var(--gn);display:inline-block}
+.hack h2{font-size:clamp(26px,4vw,34px);line-height:1.06;margin:14px 0 10px;max-width:560px}
+.hack p{color:var(--m);margin:0;max-width:680px;font-size:14px;line-height:1.65}
+.stats{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:18px auto 0;padding:10px 14px;border:1px solid var(--l);background:rgba(255,255,255,.03);border-radius:99px;max-width:720px}
+.stats span{font-size:12px;color:var(--m);display:flex;align-items:center;gap:6px}
+.stats b{color:var(--t);font-family:"Space Grotesk",sans-serif}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px}
+.prev{padding:18px;border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--l);transition:.2s}
+.prev:hover{border-color:rgba(123,132,255,.22);transform:translateY(-2px)}
+.prev b{font-family:"Space Grotesk",sans-serif;font-size:13px;color:var(--t)}
+.prev p{font-size:12px;color:var(--m);margin:6px 0 0;line-height:1.5}
+.prev small{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--m2)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:28px}
+.cmp{padding:18px;border-radius:14px;border:1px solid var(--l);background:rgba(255,255,255,.02)}
+.cmp h4{font-family:"Space Grotesk",sans-serif;margin:0 0 10px;font-size:14px}
+.cmp li{font-size:12px;color:var(--m);margin:6px 0;list-style:none;position:relative;padding-left:16px}
+.cmp li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--l)}
+.cmp.good{border-color:rgba(86,217,160,.18);background:rgba(86,217,160,.06)}
+.cmp.good li::before{background:var(--gn)}
+.cta{text-align:center;padding:88px 0}
+.cta h2{font-size:clamp(36px,6vw,60px);margin:12px 0;font-weight:700}
+.cta p{color:var(--m);max-width:640px;margin:0 auto 22px;font-size:17px}
+.stack{margin:18px auto 0;max-width:900px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.stack span{font-family:"JetBrains Mono",monospace;font-size:11px;padding:8px 11px;border-radius:8px;background:var(--s2);border:1px solid var(--l);color:var(--m)}
+footer{border-top:1px solid var(--l);padding:24px 0}
+.foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--m2);font-size:11px;align-items:center}
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:none}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(10px);background:var(--s2);border:1px solid var(--l);padding:9px 13px;border-radius:10px;font-size:12px;opacity:0;pointer-events:none;transition:.3s;z-index:80;max-width:calc(100% - 24px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@keyframes breathe{50%{opacity:.65;transform:translateX(-50%) scale(1.07)}}@keyframes pulse{50%{opacity:.35;box-shadow:0 0 0 7px rgba(123,132,255,.08)}}@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@keyframes grow{from{transform:scaleX(0)}}@keyframes route{from{top:-11px}to{top:28px}}
+@media(max-width:920px){
+ .nav-links{display:none}.icon-btn{display:inline-flex}
+ .nav-links.open{display:flex;position:absolute;top:64px;left:0;right:0;flex-direction:column;align-items:center;padding:18px;background:rgba(12,14,28,.98);border-bottom:1px solid var(--l)}
+ .grid,.ev-wrap,.router{grid-template-columns:1fr}
+ .agents{grid-template-columns:1fr 1fr}
+ .hack-grid{grid-template-columns:1fr 1fr}
+ .router{gap:28px}.pipe{overflow-x:auto;padding-bottom:8px;justify-content:flex-start}.nd{min-width:78px}
+ .steps-tl{grid-template-columns:1fr 1fr}.st:nth-child(2){border-right:0}.st:nth-child(n+3){border-top:1px solid var(--l)}
+ .travel-grid{grid-template-columns:1fr}.inv-body{grid-template-columns:1fr}.path{border-left:0;border-top:1px solid var(--l);padding:18px 0 0}.path .pn::before{display:none}
+}
+@media(max-width:640px){
+ .container{width:min(100% - 20px,var(--max))}
+ .hero{padding:42px 0 28px}
+ .hero h1{font-size:34px;letter-spacing:-.03em}
+ .hero-copy{font-size:15px}
+ /* FIX: pills become horizontal scroll instead of vertical stack */
+ .tech-pills{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:6px;padding:0 2px 6px;scrollbar-width:none}
+ .tech-pills::-webkit-scrollbar{display:none}
+ .pill{flex-shrink:0;font-size:10px;padding:6px 9px}
+ .quest-shell{margin:20px auto 0}
+ .quest-top{padding:14px}
+ .quest-label{font-size:12px}
+ .goal-input{min-height:50px;font-size:15px;padding:12px 14px}
+ .start-btn{width:100%;height:50px}
+ .input-wrap{grid-template-columns:1fr}
+ .domain-bar{padding:10px 12px;flex-direction:column;align-items:stretch;gap:10px}
+ .domains{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:2px;scrollbar-width:none;width:100%}
+ .domains::-webkit-scrollbar{display:none}
+ .domain{flex-shrink:0;padding:7px 10px;font-size:12px}
+ .examples{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding-bottom:4px;scrollbar-width:none}
+ .examples::-webkit-scrollbar{display:none}
+ .ex{flex-shrink:0;font-size:11px;padding:6px 10px}
+ .mini-flow{gap:6px;font-size:10px}.line{width:20px}
+ section{padding:56px 0}
+ .invest{padding:16px}
+ .inv-head,.result-top{grid-template-columns:1fr}
+ .grid,.job-grid{grid-template-columns:1fr}.wide{grid-column:auto}
+ .metric{border-left:0;padding-left:0}
+ .hack-inner{padding:20px}
+ .hack-grid{grid-template-columns:1fr 1fr;gap:10px}
+ .hk{padding:12px}
+ .preview-grid{grid-template-columns:1fr}
+ .compare{grid-template-columns:1fr}
+ .stats{border-radius:14px;gap:10px}
+ .agents{grid-template-columns:1fr}.ag{min-height:auto}.ag-ic{margin-bottom:18px}
+ .router{padding:20px}.ras{grid-template-columns:1fr 1fr}
+ .steps-tl{grid-template-columns:1fr;border-left:1px solid var(--l);margin-left:5px;border-top:0}
+ .st{border-right:0!important;border-top:1px solid var(--l);padding-left:26px}
+ .st::before{left:-5px;top:30px}
+ .foot{flex-direction:column;text-align:center}
+ .bar-row{grid-template-columns:58px 1fr 64px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="glow"></div><div class="glow-b"></div><div class="noise"></div>
+<nav id="nav"><div class="container nav-inner">
+<a class="brand" href="#top"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" width="14"><path d="M7 5.5A7 7 0 1 0 17 15l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="m14 9 3-3m0 0h-3m3 0v3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>QuestAI</a>
+<div class="nav-links" id="navLinks"><a href="#explore">Explore</a><a href="#how">How it works</a><a href="#agents">Agents</a><a href="#hackathon">Hackathon</a><a href="#about">About</a></div>
+<button class="btn btn-p" data-scroll-demo style="height:38px;font-size:13px">Try QuestAI →</button>
+<button class="btn icon-btn" id="menuBtn" aria-label="menu"><svg width="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+</div></nav>
+
+<main id="top">
+<header class="hero" id="explore"><div class="container">
+<span class="eyebrow">AI investigation workspace — live agents</span>
+<h1>Turn a question into <i>a quest.</i></h1>
+<p class="hero-copy">QuestAI investigates your goal using specialized AI agents, real-world search, and structured reasoning — then gives you an answer you can actually use. Not a chatbot. A workspace.</p>
+<div class="tech-pills"><span class="pill"><b>LangGraph</b> orchestration</span><span class="pill"><b>Groq</b> gpt-oss-120B / 20B &middot; Qwen 27B</span><span class="pill"><b>SerpApi</b> Google · Flights · Hotels · Shopping · News</span><span class="pill"><b>FastAPI</b> + Pydantic · Vite React</span></div>
+<div class="stats"><span><b>4</b> Specialized agents</span><span style="opacity:.3">·</span><span><b>6</b> SerpApi engines</span><span style="opacity:.3">·</span><span><b>Evidence</b> preserved</span><span style="opacity:.3">·</span><span><b>Structured</b> results</span></div>
+
+<div class="quest-shell" id="demo-stage">
+<div class="quest-card" id="inputCard">
+<div class="quest-top">
+<div class="quest-label"><span>What do you want to accomplish?</span><span class="mode"><span class="mode-dot"></span><span id="modeLabel">Research mode</span></span></div>
+<div class="input-wrap"><input id="goalInput" class="goal-input" value="Research the latest developments in RAG evaluation" placeholder="Describe a goal..." aria-label="goal"><button class="btn btn-p start-btn" id="startQuest">Start Quest →</button></div>
+<div class="err" id="err">Give QuestAI a goal to investigate.</div>
+</div>
+<div class="domain-bar"><div class="domains" id="domains"></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--m2);white-space:nowrap">⌘ + Enter</span></div>
+</div>
+<div class="examples" id="examples"></div>
+<div id="investigation" class="invest panel hidden" aria-live="polite"></div>
+<div id="result" class="hidden" aria-live="polite"></div>
+</div>
+<div class="mini-flow"><b>Goal</b><span class="line"></span><b>Investigation</b><span class="line"></span><b>Intelligence</b><span class="line"></span><b>Result</b></div>
+</div></header>
+
+<section id="agents"><div class="container reveal">
+<div class="head"><span class="eyebrow">Agent system — evaluated from code</span><h2>One goal. Specialized intelligence.</h2><p>QuestAI routes your goal to the right LangGraph. Each agent has its own tools, schemas, and evidence pipeline — not a prompt wrapper.</p></div>
+<div class="preview-grid">
+<div class="prev"><small>RESEARCH · evidence</small><b>Executive summary + 3 findings</b><p>Citations to verbatim sources, recent developments, limitations — validated atomically.</p></div>
+<div class="prev"><small>TRAVEL · itinerary</small><b>Flights + Hotels + Days</b><p>Dependency-aware plan with hash-cached reruns and budget-aware selection.</p></div>
+<div class="prev"><small>SHOPPING · PriceScope</small><b>Compare + cheapest highlight</b><p>Live India INR prices, verbatim product evidence, filters and ranking.</p></div>
+</div>
+<div class="agents" style="margin-top:14px">
+<article class="panel ag"><div class="ag-ic"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4 4M8 9h6M8 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><small>Agent 01 · Research · Live</small><h3>Research Agent</h3><p>Evidence-grounded research with citation validation. LLM proposes → evidence preserved → validator checks.</p><div class="tech">graph: planner → router → collector → evaluator → gap_analyzer → synthesizer → validator<br>3 rounds · 15 evidence max · 1 resynthesis<br>tools: google / scholar / news via SerpApi</div></article>
+<article class="panel ag"><div class="ag-ic"><svg viewBox="0 0 24 24" fill="none"><path d="m3 13 8-2V5.5a1.5 1.5 0 0 1 3 0V10l6-1.5v3L14 15v4l2 1v1l-3.5-1-3.5 1v-1l2-1v-3.3L3 16v-3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></div><small>Agent 02 · Travel · Live</small><h3>Travel Agent</h3><p>Trip Planner orchestrates Flight + Hotel + destination research with dependency-aware execution.</p><div class="tech">trip_graph: 7 nodes · DEPENDENCY_MAP<br>hash-cached · conditional dispatch<br>Google Flights & Hotels via SerpApi</div></article>
+<article class="panel ag"><div class="ag-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1 12H6L5 8Z" stroke="currentColor" stroke-width="1.7"/><path d="M9 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="1.7"/></svg></div><small>Agent 03 · Shopping · Live</small><h3>Shopping Agent</h3><p>PriceScope — live Indian Google Shopping comparison. Verbatim product evidence, cheapest highlight.</p><div class="tech">engine: google_shopping · INR · India<br>fast-path LLM cleaning (gpt-oss-20B)<br>evidence: verbatim store/price/source</div></article>
+<article class="panel ag coming"><div class="ag-ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M9 7V5h6v2M3 12h18" stroke="currentColor" stroke-width="1.7"/></svg></div><small>Agent 04 · Jobs · Roadmap</small><h3>Job Agent</h3><p>Investigates opportunities by skills & location — structures matches with evidence. Demo only.</p><div class="tech">status: frontend demo · no backend yet<br>planned: google jobs via SerpApi<br>demo shows filtering & match scores</div></article>
+</div>
+</div></section>
+
+<section><div class="container reveal">
+<div class="router panel"><div><span class="eyebrow">Conditional execution — real logic</span><h2 style="font-size:clamp(30px,4vw,46px);line-height:1.06;margin:14px 0">The right agent.<br>For the right quest.</h2><p style="color:var(--m);font-size:14px">Travel's <code style="font-family:'JetBrains Mono',monospace;background:var(--s2);padding:2px 6px;border-radius:6px;border:1px solid var(--l)">DEPENDENCY_MAP</code> + <code style="font-family:'JetBrains Mono',monospace;background:var(--s2);padding:2px 6px;border-radius:6px;border:1px solid var(--l)">input-hash caching</code> means "change hotel to 5-star" only reruns Hotel Agent.</p>
+<span class="qchip">“Compare iPhone 16 prices” → Shopping Agent ✓</span><p style="color:var(--m2);font-size:11px;margin-top:8px;font-family:'JetBrains Mono',monospace">Research — &nbsp; Travel — &nbsp; Jobs — bypassed · saved 3 tool calls</p>
+<div class="tech-note">trip_graph.py:32 DEPENDENCY_MAP · trip_graph.py:613 dispatch_agents · schemas/trip.py:152 compute_flight/hash</div>
+</div>
+<div class="map"><div class="rn">Your Goal</div><div class="cv"></div><div class="rn core">QuestAI Router</div><div class="cv"></div><div class="ras"><div class="ra">Research —</div><div class="ra">Travel —</div><div class="ra on">Shopping <b>✓</b></div><div class="ra">Jobs —</div></div></div>
+</div>
+</div></section>
+
+<section><div class="container ev-wrap reveal">
+<div class="head" style="margin:0"><span class="eyebrow">Trust — code-level</span><h2>AI reasoning, grounded in evidence.</h2><p>Evidence is extracted verbatim (<code style="font-family:'JetBrains Mono',monospace;background:var(--s2);padding:2px 6px;border-radius:6px;border:1px solid var(--l)">ev_001</code>), capped at 15, deduped by claim — then validator does atomic claim checks and can force one resynthesis.</p><p style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--m2)">MAX_SYNTHESIS_EVIDENCE=15 · max_rounds=3 · resynthesis_count&lt;1</p><div class="tech-note">services/source_processor.py · graph/nodes/validator.py:213 · hedged findings require evidence_refs</div></div>
+<div class="pipe" aria-label="evidence pipeline">
+<div class="nd"><span><svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l3 3v15H6V3Z" stroke="currentColor" stroke-width="1.6"/><path d="M9 10h6M9 14h6" stroke="currentColor" stroke-width="1.6"/></svg>Sources</span></div><span class="arrw"></span>
+<div class="nd"><span><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="5" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.6"/></svg>Evidence<br><small style="color:var(--m2);font-size:9px">ev_001</small></span></div><span class="arrw"></span>
+<div class="nd"><span><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M9 12h6M12 9v6" stroke="currentColor" stroke-width="1.6"/></svg>Analysis</span></div><span class="arrw"></span>
+<div class="nd"><span><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.6"/><path d="m8 12 3 3 5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Validation</span></div><span class="arrw"></span>
+<div class="nd" style="border-color:rgba(86,217,160,.3);background:var(--gns)"><span><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h14v13H9l-4 3V4Z" stroke="currentColor" stroke-width="1.6"/></svg>Answer</span></div>
+</div>
+</div></section>
+
+<section id="how"><div class="container reveal"><div class="head center"><span class="eyebrow">How it works</span><h2>From intent to useful output.</h2><p>A focused workflow replaces the blank chat box and the wall of generated text.</p></div><div class="steps-tl"><article class="st"><b>01</b><h3>Give it a goal</h3><p>Describe what you want — trip, product, research question — in natural language.</p></article><article class="st"><b>02</b><h3>QuestAI investigates</h3><p>Router picks the right LangGraph. Dependency-aware dispatch runs only needed tools.</p></article><article class="st"><b>03</b><h3>Evidence becomes insight</h3><p>Verbatim evidence is deduped, hedged, and validated atomically before synthesis.</p></article><article class="st"><b>04</b><h3>Get something useful</h3><p>Structured cards, comparisons, itineraries — not a chat transcript.</p></article></div></div></section>
+
+<section class="philosophy" id="about"><div class="container reveal"><span class="eyebrow">Product philosophy</span><h2>Not another <span class="strike">chatbot.</span></h2><p>QuestAI is built around goals, investigation, specialized agents, and structured results — not endless conversations.</p><p style="margin-top:14px;color:var(--m2);font-size:13px">Give QuestAI a goal. It investigates. You get the result.</p></div></section>
+
+<!-- SERPAPI HACKATHON — why we built -->
+<section class="hack" id="hackathon"><div class="container reveal">
+<div class="hack-card"><div class="hack-inner">
+<span class="hack-badge"><i></i> SerpApi India Hackathon 2026</span>
+<h2>Why we built QuestAI</h2>
+<p>Search results alone are not answers. We built QuestAI to turn a goal into an investigation — specialized agents use SerpApi live data to plan, collect, validate and synthesize, delivering structured workspaces instead of chat dumps.</p>
+<a href="https://serpapi.github.io/serpapi-india-hackathon-2026/" target="_blank" rel="noopener" style="display:inline-flex;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#b9c1ff;text-decoration:underline;text-underline-offset:3px">serpapi.github.io/serpapi-india-hackathon-2026</a>
+</div></div>
+</div></section>
+
+<section class="cta"><div class="container reveal"><span class="eyebrow">Your next quest</span><h2>What will you investigate?</h2><p>Give QuestAI your next question, decision, trip, or product search.</p><button class="btn btn-p" data-scroll-demo style="height:52px;padding:0 24px;font-size:15px">Start a Quest →</button></div></section>
+</main>
+<footer><div class="container foot"><span class="brand" style="font-size:15px"><span class="brand-mark" style="width:22px;height:22px;border-radius:7px"><svg width="12" viewBox="0 0 24 24" fill="none"><path d="M7 5.5A7 7 0 1 0 17 15l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>QuestAI</span><span>Goal → Investigation → Intelligence → Result</span><span>2026 · LangGraph · Groq · SerpApi · Hackathon showcase</span></div></footer>
+<div class="toast" id="toast">Demo — frontend only</div>
+
+<script>
+const icons={research:'<svg viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="5" stroke="currentColor" stroke-width="2"/><path d="m14 14 5 5M7 9h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',travel:'<svg viewBox="0 0 24 24" fill="none"><path d="m3 13 8-2V5.5a1.5 1.5 0 0 1 3 0V10l6-1.5v3L14 15v4l2 1v1l-3.5-1-3.5 1v-1l2-1v-3.3L3 16v-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',shopping:'<svg viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1 12H6L5 8Z" stroke="currentColor" stroke-width="1.8"/><path d="M9 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="1.8"/></svg>',jobs:'<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9 7V5h6v2M3 12h18" stroke="currentColor" stroke-width="1.8"/></svg>'};
+const data={
+ research:{label:'Research',query:'Research the latest developments in RAG evaluation',examples:['Latest developments in RAG evaluation','Compare agentic search frameworks','Research synthetic data quality methods']},
+ travel:{label:'Travel',query:'Plan a 5-day Dubai trip from Delhi for 2 people under $2000',examples:['Plan a 5-day Dubai trip from Delhi for 2 people','Build a week-long Japan itinerary','Find a quiet beach trip under $1,500']},
+ shopping:{label:'Shopping',query:'Compare iPhone 16 128GB prices',examples:['Compare iPhone 16 128GB prices','Find the best 4K monitor under ₹35,000','Compare noise-cancelling headphones']},
+ jobs:{label:'Jobs',query:'Find Python AI internships in India',examples:['Find Python AI internships in India','Remote product design roles in Europe','Entry-level data analyst jobs in Bengaluru'],roadmap:true}
+};
+let selected='research',running=false;
+const input=document.getElementById('goalInput'),domainsEl=document.getElementById('domains'),examplesEl=document.getElementById('examples'),inputCard=document.getElementById('inputCard'),investigation=document.getElementById('investigation'),result=document.getElementById('result'),err=document.getElementById('err');
+function renderDomains(){domainsEl.innerHTML=Object.entries(data).map(([k,d])=>`<button class="domain ${k===selected?'active':''} ${d.roadmap?'coming':''}" data-domain="${k}" ${d.roadmap?'title="Roadmap — demo only"':''}>${icons[k]}${d.label}${d.roadmap?' <small>soon</small>':''}</button>`).join('')}
+function renderExamples(){examplesEl.innerHTML=data[selected].examples.map(q=>`<button class="ex" data-ex="${q}">${q}</button>`).join('')}
+function chooseDomain(k){if(running) return; selected=k; input.value=data[k].query; document.getElementById('modeLabel').textContent=data[k].label+(data[k].roadmap?' — roadmap demo':' mode'); renderDomains(); renderExamples(); if(data[k].roadmap) showToast('Jobs Agent is roadmap — demo data only');}
+domainsEl.addEventListener('click',e=>{const b=e.target.closest('[data-domain]'); if(b) chooseDomain(b.dataset.domain)});
+examplesEl.addEventListener('click',e=>{const b=e.target.closest('[data-ex]'); if(b){input.value=b.dataset.ex; input.focus()}});
+renderDomains(); renderExamples();
+const stepsMap={
+ research:['Planning sub-questions & queries','Routing to Google / Scholar / News','Collecting sources','Evaluating & extracting evidence','Analyzing gaps → synthesizing','Validating atomic claims'],
+ travel:['Extracting trip params → IATA','Validating dates / budget / travelers','Detecting impacted agents','Searching Flights (SerpApi)','Searching Hotels (SerpApi)','Researching destination & synthesizing itinerary'],
+ shopping:['Cleaning query (fast-path vs gpt-oss-20B)','Searching Google Shopping India','Normalizing products','Building verbatim evidence','Ranking by price / relevance'],
+ jobs:['Parsing opportunity criteria','Searching openings (roadmap)','Scoring matches','Organizing results']
+};
+function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function showToast(m){const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2200)}
+function renderInvestigation(){
+ const agent=data[selected].label+' Agent'+(data[selected].roadmap?' · demo':'');
+ const tech=data[selected].roadmap?'No backend — demo data':selected==='research'?'groq gpt-oss-120B · qwen 27B · SerpApi':selected==='travel'?'SerpApi Flights/Hotels · TripSession':selected==='shopping'?'SerpApi google_shopping · INR':'Roadmap';
+ investigation.innerHTML=`<div class="inv-head"><div><span class="eyebrow">Quest in progress</span><h3>QuestAI is investigating...</h3><p>${escapeHtml(input.value)}</p><div class="tech-note">${tech} · ${stepsMap[selected].length} steps</div></div><span class="live"><span class="pulse"></span>Live investigation</span></div><div class="inv-body"><div class="steps">${stepsMap[selected].map((s,i)=>`<div class="s" data-step="${i}"><span class="ic">${i+1}</span><span>${s}</span><span class="meta">Queued</span></div>`).join('')}</div><aside class="path"><small>Execution path</small><div class="pn on">QuestAI Router</div><div class="pn on">${agent}</div><div class="pn off">Other agents bypassed</div><div class="tech-note" style="margin-top:10px">travel: hash-cached skip · research: capped 15 evidence</div></aside></div>`;
+}
+function startQuest(){
+ if(running) return;
+ if(!input.value.trim()){err.classList.add('show'); input.focus(); return}
+ err.classList.remove('show'); running=true;
+ inputCard.classList.add('hidden'); examplesEl.classList.add('hidden'); result.classList.add('hidden');
+ renderInvestigation(); investigation.classList.remove('hidden');
+ investigation.scrollIntoView({behavior:'smooth',block:'center'});
+ const els=[...investigation.querySelectorAll('.s')];
+ els.forEach((el,i)=>setTimeout(()=>{
+  if(i>0){const p=els[i-1]; p.classList.remove('active'); p.classList.add('done'); p.querySelector('.ic').textContent='✓'; p.querySelector('.meta').textContent='Complete'}
+  el.classList.add('active'); el.querySelector('.meta').textContent='Working';
+ },300+i*620));
+ setTimeout(()=>{const last=els.at(-1); last.classList.remove('active'); last.classList.add('done'); last.querySelector('.ic').textContent='✓'; last.querySelector('.meta').textContent='Complete'},300+els.length*620+90);
+ setTimeout(showResult, 300+els.length*620+520);
+}
+function showResult(){investigation.classList.add('hidden'); result.innerHTML=templates[selected](); result.classList.remove('hidden'); result.scrollIntoView({behavior:'smooth',block:'start'}); bindControls()}
+function resetQuest(){running=false; result.classList.add('hidden'); investigation.classList.add('hidden'); inputCard.classList.remove('hidden'); examplesEl.classList.remove('hidden'); inputCard.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>input.focus(),380)}
+const head=(type,title,meta)=>`<div class="result-top"><div><span class="eyebrow">${type} Quest</span><h3>${title}</h3><p>${meta}</p></div><span class="badge">✓ Investigation complete</span></div>`;
+const newBtn=()=>`<div style="text-align:center;margin-top:18px"><button class="btn btn-ghost" data-new>← Start New Quest</button></div>`;
+const templates={
+research:()=>`${head('Research','Latest developments in RAG evaluation','Evidence-grounded · max 3 rounds · 14 sources · ev_001 evidence bank')}<div class="grid"><article class="panel card wide"><h4>Executive Summary</h4><p class="summary">RAG evaluation is moving beyond answer similarity toward modular measurement: retrieval quality, citation faithfulness, and task usefulness. Strongest pipelines separate retriever and generator scores, then validate each claim against preserved verbatim evidence.</p><p style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--m2)">Synthesizer gpt-oss-120B · findings hedge (suggests/indicates) · must cite ev_* only</p></article><article class="panel card"><h4>Key Findings</h4><div class="findings"><div class="finding"><span class="num">01</span><div><strong>Modular evaluation wins</strong><p>Score retrieval, context quality, faithfulness, relevance separately. <sup style="color:#b8c0ff">[1][2]</sup></p></div></div><div class="finding"><span class="num">02</span><div><strong>LLM judges need calibration</strong><p>Scale well but drift across models/prompts — transparent rubrics required. <sup style="color:#b8c0ff">[3]</sup></p></div></div><div class="finding"><span class="num">03</span><div><strong>Agentic RAG changes targets</strong><p>Tool choice, reformulation, multi-step chains now evaluated. <sup style="color:#b8c0ff">[4]</sup></p></div></div></div></article><aside class="panel card"><h4>Evidence Sources · ev_001</h4><div class="source"><div><strong>RAGAS framework</strong><br><span>Faithfulness & relevance metrics</span></div><span class="tag">[1]</span></div><div class="source"><div><strong>ARES benchmark</strong><br><span>Automated RAG eval</span></div><span class="tag">[2]</span></div><div class="source"><div><strong>Stanford CRFM</strong><br><span>Judge reliability study</span></div><span class="tag">[3]</span></div><div class="source"><div><strong>arXiv survey</strong><br><span>Agentic retrieval</span></div><span class="tag">[4]</span></div><div class="source"><div><strong>LangChain Eval</strong><br><span>Context precision/recall</span></div><span class="tag">[5]</span></div><p style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--m2)">MAX_SYNTHESIS_EVIDENCE=15 · dedup by claim 50% per source-type cap</p></aside><article class="panel card"><h4>Recent Developments</h4><p>Benchmarks now adversarial-test citations per-claim, long-doc retrieval, and retrieval-aware fine-tuning. Collector runs parallel google(5)+news(5) via ThreadPool.</p></article><article class="panel card" style="border-left:2px solid var(--am)"><h4>Limitations · Validator</h4><p>Public benchmarks underrepresent domain workflows. Validator breaks findings into atomic claims; unsupported findings removed, one resynthesis allowed.</p></article></div>${newBtn()}`,
+travel:()=>`${head('Travel','Delhi → Dubai','5 days · 2 travelers · Mar 18–22 · Google Flights/Hotels via SerpApi')}<div class="grid"><article class="panel card wide"><h4>Trip Overview · TripSession</h4><div class="trip-ov"><span class="route">DEL <span class="arr">→</span> DXB</span><span class="metric">5 days<br><b style="color:var(--t)">2 travelers</b></span><span class="metric">Budget<br><b style="color:var(--gn)">Under $2,000</b></span><span class="metric">Status<br><b style="color:var(--t)">ready</b></span><span class="metric">Caching<br><b style="color:var(--m)">hash-hit ready</b></span></div><p style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--m2)">origin/destination/dates/budget → md5 hash → reuse flight_results if unchanged</p></article><div class="grid wide travel-grid"><article class="panel card"><h4>Flights · google_flights</h4><div class="opt"><div class="opt-row"><div><strong>Emirates · EK 511</strong><br><span>DEL 10:35 → DXB 13:00 · IATA resolved</span></div><span class="price">$542</span></div><div class="opt-row" style="margin-top:10px"><span>3h 55m · Nonstop · Round trip</span><span style="color:var(--gn);font-weight:800">selected (cheapest)</span></div></div><div class="opt" style="opacity:.88"><div class="opt-row"><div><strong>Air India · AI 929</strong><br><span>DEL 08:40 → DXB 11:15</span></div><span class="price">$498</span></div><div class="opt-row" style="margin-top:10px"><span>4h 05m · Nonstop</span><span>alt</span></div></div><p style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--m2)">FlightResult id=md5(airline-flight-time) · normalizer merges best+other</p></article><article class="panel card"><h4>Hotels · google_hotels</h4><div class="opt"><div class="opt-row"><div><strong>Rove Downtown</strong><br><span>Downtown · ★4.6 · 1.1km Burj Khalifa</span></div><span class="price">$147<small>/nt</small></span></div><div class="opt-row" style="margin-top:10px"><span>4 nights · free cancellation</span><span>Total $588</span></div></div><div class="opt" style="opacity:.88"><div class="opt-row"><div><strong>Vida Creek Harbour</strong><br><span>Creek · ★4.7</span></div><span class="price">$163<small>/nt</small></span></div><div class="opt-row" style="margin-top:10px"><span>Pool · waterfront</span><span>alt</span></div></div><p style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--m2)">sort_by relevance/price/rating · max_hotel_per_night = budget*0.4/nights</p></article></div><article class="panel card"><h4>5-Day Itinerary · destination research</h4><div class="day"><b>DAY 1</b><div><strong>Arrival & Downtown</strong><br><small style="color:var(--m)">Dubai Fountain · Souk Al Bahar</small></div></div><div class="day"><b>DAY 2</b><div><strong>Burj Khalifa & Dubai Mall</strong><br><small style="color:var(--m)">At the Top · Aquarium</small></div></div><div class="day"><b>DAY 3</b><div><strong>Old Dubai & Desert Safari</strong><br><small style="color:var(--m)">Al Fahidi · dunes BBQ</small></div></div><div class="day"><b>DAY 4</b><div><strong>Marina & Palm</strong><br><small style="color:var(--m)">Marina walk · Atlantis</small></div></div><div class="day"><b>DAY 5</b><div><strong>Jumeirah & Departure</strong><br><small style="color:var(--m)">La Mer · fly back</small></div></div><p style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--m2)">research_destination(): 3-4 LLM queries → parallel google_search/news → DayPlan + DestinationEvidence</p></article><aside class="panel card"><h4>Estimated Budget</h4><div class="costbar"><span></span><span></span><span></span></div><div class="legend"><span>● Flight $542</span><span>● Hotel $588</span><span>● Activities $246</span></div><div class="total">$1,376 <small>· $624 under</small></div><p style="font-size:11px;color:var(--m);margin-top:8px">TripBudget: flight_actual / hotel_actual / activities_estimated</p><div style="margin-top:14px;padding:11px;background:rgba(123,132,255,.08);border:1px solid rgba(123,132,255,.18);border-radius:10px"><strong style="font-size:12px">Dependency-aware</strong><p style="font-size:11px;color:var(--m);margin-top:4px">"Change hotel to 5-star" → detect_impact → only Hotel Agent reruns. Flight hash unchanged → reused.</p></div></aside></div>${newBtn()}`,
+shopping:()=>`${head('PriceScope','iPhone 16 — 128GB','Live Google Shopping India · INR · google_shopping engine')}<div class="panel card" style="margin-bottom:14px"><h4>Refine — UI controls, not chat</h4><div class="controls"><select class="ctrl" id="storeFilter"><option>All stores</option><option>Amazon</option><option>Flipkart</option><option>Croma</option><option>Reliance Digital</option></select><select class="ctrl" id="priceFilter"><option>Any price</option><option>Under ₹70,000</option><option>₹70,000–₹75,000</option></select><select class="ctrl"><option>Rating 4.0+</option><option>Rating 4.5+</option></select><select class="ctrl" id="sortSel"><option value="price">Sort: Price low → high</option><option value="relevance">Sort: Relevance</option></select></div><p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--m2)">Query → Search → Compare → Filter/Sort → Result · fast-path if ≤35 chars & ≤6 tokens else gpt-oss-20B</p></div><div class="grid"><article class="panel card"><h4>Store Comparison · verbatim evidence</h4><div style="overflow-x:auto"><table class="store"><thead><tr><th>Store</th><th>Price</th><th>Rating</th><th>Delivery</th></tr></thead><tbody id="storeRows"><tr class="best" data-store="Amazon" data-price="69999"><td><strong>Amazon</strong><span class="bestlbl">Best price</span></td><td><strong>₹69,999</strong></td><td>4.6 ★</td><td>Tomorrow</td></tr><tr data-store="Flipkart" data-price="70499"><td><strong>Flipkart</strong></td><td>₹70,499</td><td>4.5 ★</td><td>2 days</td></tr><tr data-store="Croma" data-price="72990"><td><strong>Croma</strong></td><td>₹72,990</td><td>4.7 ★</td><td>Pickup today</td></tr><tr data-store="Reliance Digital" data-price="73400"><td><strong>Reliance Digital</strong></td><td>₹73,400</td><td>4.5 ★</td><td>2–3 days</td></tr></tbody></table></div><p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--m2);margin-top:10px">normalize_products: skip if !title||!product_link||price≤0 · id=md5(title-url)[:12]</p></article><aside class="panel card"><h4>Price Visualization</h4><div class="bars"><div class="bar-row"><span>Amazon</span><div class="track"><div class="fill" style="width:86%"></div></div><strong>₹69,999</strong></div><div class="bar-row"><span>Flipkart</span><div class="track"><div class="fill" style="width:90%"></div></div><strong>₹70,499</strong></div><div class="bar-row"><span>Croma</span><div class="track"><div class="fill" style="width:96%"></div></div><strong>₹72,990</strong></div><div class="bar-row"><span>Reliance</span><div class="track"><div class="fill" style="width:100%"></div></div><strong>₹73,400</strong></div></div><div class="opt" style="margin-top:18px;border-color:rgba(86,217,160,.25)"><div class="opt-row"><span>Potential savings</span><strong style="color:var(--gn)">₹3,401</strong></div><p style="font-size:11px;color:var(--m);margin:6px 0 0">vs highest verified listing · tap row for demo</p></div></aside></div>${newBtn()}`,
+jobs:()=>`${head('Jobs','Python AI internships in India','Demo only · Jobs Agent is roadmap — 4 mock matches')}<div class="panel card" style="margin-bottom:14px"><h4>Refine — coming soon live</h4><div class="controls"><select class="ctrl"><option>All locations</option><option>Bengaluru</option><option>Remote India</option></select><select class="ctrl"><option>Any work mode</option><option>Remote</option><option>Hybrid</option></select><select class="ctrl"><option>Internship 0–1y</option></select><select class="ctrl"><option>Python / PyTorch / NLP</option></select></div><p style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--am)">⚠ No backend yet — demo filtering only. Planned: SerpApi Google Jobs.</p></div><div class="job-grid"><article class="job"><div class="job-head"><div><h5>AI Research Intern</h5><span class="comp">Sarvam AI · Bengaluru</span></div><span class="match">94% match</span></div><div class="chips"><span class="chip">Bengaluru</span><span class="chip">On-site</span><span class="chip">Internship</span><span class="chip">Python</span><span class="chip">PyTorch</span></div><div class="opt-row"><span style="color:var(--m);font-size:12px">Posted 2d ago · 6 months</span><button class="apply">View role →</button></div></article><article class="job"><div class="job-head"><div><h5>Machine Learning Intern</h5><span class="comp">Krutrim · Bengaluru</span></div><span class="match">91% match</span></div><div class="chips"><span class="chip">Hybrid</span><span class="chip">NLP</span><span class="chip">Python</span></div><div class="opt-row"><span style="color:var(--m);font-size:12px">Posted 4d ago</span><button class="apply">View role →</button></div></article><article class="job"><div class="job-head"><div><h5>Generative AI Intern</h5><span class="comp">Yellow.ai · Remote India</span></div><span class="match">87% match</span></div><div class="chips"><span class="chip">Remote</span><span class="chip">LLMs</span><span class="chip">RAG</span></div><div class="opt-row"><span style="color:var(--m);font-size:12px">Posted 5d ago</span><button class="apply">View role →</button></div></article><article class="job"><div class="job-head"><div><h5>Data Science Intern</h5><span class="comp">Razorpay · Bengaluru</span></div><span class="match">83% match</span></div><div class="chips"><span class="chip">Hybrid</span><span class="chip">Python</span><span class="chip">SQL</span></div><div class="opt-row"><span style="color:var(--m);font-size:12px">Posted 1w ago</span><button class="apply">View role →</button></div></article></div>${newBtn()}`
+};
+function bindControls(){
+ document.querySelector('[data-new]')?.addEventListener('click',resetQuest);
+ const sf=document.getElementById('storeFilter'), pf=document.getElementById('priceFilter'), so=document.getElementById('sortSel');
+ function filter(){ if(!sf) return; const s=sf.value, p=pf?pf.value:'Any price'; document.querySelectorAll('#storeRows tr').forEach(r=>{ let show=true; if(s!=='All stores'&&r.dataset.store!==s) show=false; const price=parseInt(r.dataset.price,10); if(p==='Under ₹70,000'&&price>=70000) show=false; if(p==='₹70,000–₹75,000'&&(price<70000||price>75000)) show=false; r.style.display=show?'':'none'; });}
+ sf?.addEventListener('change',filter); pf?.addEventListener('change',filter);
+ so?.addEventListener('change',()=>{const tb=document.getElementById('storeRows'); if(!tb) return; const rows=[...tb.querySelectorAll('tr')]; rows.sort((a,b)=>so.value==='price'?parseInt(a.dataset.price)-parseInt(b.dataset.price):a.dataset.store.localeCompare(b.dataset.store)); rows.forEach(r=>tb.appendChild(r)); showToast(so.value==='price'?'Sorted by price':'Sorted by relevance')});
+ document.querySelectorAll('#storeRows tr').forEach(r=>r.addEventListener('click',()=>showToast(r.dataset.store+' — store link (demo)')));
+ document.querySelectorAll('.apply').forEach(b=>b.addEventListener('click',()=>{b.textContent='Demo role ✓'; b.style.color='var(--gn)'; showToast('Job details — demo only')}));
+}
+document.getElementById('startQuest').addEventListener('click',startQuest);
+input.addEventListener('keydown',e=>{ if(e.key==='Enter') startQuest()});
+input.addEventListener('input',()=>err.classList.remove('show'));
+document.querySelectorAll('[data-scroll-demo]').forEach(b=>b.addEventListener('click',()=>{document.getElementById('demo-stage').scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>input.focus(),450)}));
+document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
+document.getElementById('navLinks').addEventListener('click',e=>{ if(e.target.tagName==='A') document.getElementById('navLinks').classList.remove('open')});
+addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>10));
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting) e.target.classList.add('visible')}),{threshold:.12}); document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
